@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catatan Jual Beli</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #f5f5f5;
+    padding: 15px;
+}
+
+h1 {
+    font-size: 18px;
+}
+h1 a {
+    text-decoration: none;
+    color: #2c3e50;
+}
+
+.container {
+    background: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+select, input, button {
+    padding: 8px;
+    font-size: 14px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+button {
+    background: #3498db;
+    color: #fff;
+    border: none;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 13px;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 6px;
+    text-align: center;
+}
+
+th {
+    background: #eee;
+}
+
+/* warna baris */
+.green  { color: green; }
+.blue   { color: blue; }
+.purple { color: purple; }
+.yellow { color: goldenrod; }
+.orange { color: #e65100; }
+</style>
+</head>
+
+<body>
+
+<h1><a href="#">Catatan Jual Beli Item</a></h1>
+<h1><a href="#">Rucoy Online Market</a></h1>
+
+<div class="container">
+<div class="form-group">
+    <select id="monster">
+        <option value="">Monster</option>
+        <option>Drow</option>
+        <option>Lizard</option>
+        <option>Gargoyle</option>
+        <option>Minotaur</option>
+        <option>Dragon</option>
+        <option>Ice</option>
+        <option>Lava</option>
+        <option>Golden</option>
+    </select>
+
+    <select id="item">
+        <option value="">Item</option>
+            <option value="Armor">Armor</option>
+            <option value="Light Armor">Light Armor</option>
+            <option value="Robe">Robe</option>
+            <option value="Helmet">Helmet</option>
+            <option value="Hat">Hat</option>
+            <option value="Hood">Hood</option>
+            <option value="Shield">Shield</option>
+            <option value="Backpack">Backpack</option>
+            <option value="Pendant">Pendant</option>
+            <option value="Sword">Sword</option>
+            <option value="Glove Left">Glove Left</option>
+            <option value="Glove Right">Glove Right</option>
+            <option value="Bow">Bow</option>
+            <option value="Ring">Ring</option>
+            <option value="Legs">Legs</option>
+            <option value="Belt">Belt</option>
+            <option value="Wand">Wand</option>
+            <option value="Boots">Boots</option>
+            <option value="Quiver">Quiver</option>
+            <option value="Jewel">Jewel</option>
+            <option value="Key">Key</option>
+    </select>
+
+    <select id="color">
+        <option value="">No Color</option>
+        <option value="green">Green</option>
+        <option value="blue">Blue</option>
+        <option value="purple">Purple</option>
+        <option value="yellow">Yellow</option>
+        <option value="orange">Orange</option>
+    </select>
+
+    <input type="number" id="jumlah" min="1" value="1" placeholder="Jumlah">
+    <input type="number" id="hargaBeli" placeholder="Harga Beli">
+    <input type="number" id="hargaJual" placeholder="Harga Jual">
+
+    <button onclick="tambahBarang()">Tambah</button>
+</div>
+</div>
+
+<div class="container">
+<h3>Tabel Beli Barang</h3>
+<table>
+<thead>
+<tr>
+<th>No</th>
+<th>Tanggal</th>
+<th>Item</th>
+<th>Harga Beli</th>
+<th>Harga Jual</th>
+<th>Stok</th>
+<th>Jual</th>
+</tr>
+</thead>
+<tbody id="tabelBeli"></tbody>
+</table>
+</div>
+
+<div class="container">
+<h3>Barang Terjual</h3>
+<table>
+<thead>
+<tr>
+<th>No</th>
+<th>Tanggal</th>
+<th>Item</th>
+<th>Harga Beli</th>
+<th>Harga Jual</th>
+<th>Profit</th>
+<th>Total Profit</th>
+<th>Total Beli</th>
+</tr>
+</thead>
+<tbody id="tabelJual"></tbody>
+</table>
+</div>
+
+<div class="container">
+<h3>Grafik Pendapatan Harian</h3>
+<canvas id="grafikProfit" height="120"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+let beli = JSON.parse(localStorage.getItem("beli")) || [];
+let jual = JSON.parse(localStorage.getItem("jual")) || [];
+let chart;
+
+function tanggal() {
+    return new Date().toLocaleString();
+}
+
+function format(n) {
+    return n.toLocaleString("id-ID");
+}
+
+function simpan() {
+    localStorage.setItem("beli", JSON.stringify(beli));
+    localStorage.setItem("jual", JSON.stringify(jual));
+}
+
+function tambahBarang() {
+    if (!monster.value || !item.value) return;
+
+    const baru = {
+        monster: monster.value,
+        item: item.value,
+        color: color.value,
+        hargaBeli: Number(hargaBeli.value),
+        hargaJual: Number(hargaJual.value),
+        stok: Number(jumlah.value),
+        tanggal: tanggal()
+    };
+
+    let same = beli.find(b =>
+        b.monster === baru.monster &&
+        b.item === baru.item &&
+        b.color === baru.color &&
+        b.hargaBeli === baru.hargaBeli &&
+        b.hargaJual === baru.hargaJual
+    );
+
+    if (same) {
+        same.stok += baru.stok;
+        same.tanggal = tanggal();
+    } else {
+        beli.push(baru);
+    }
+
+    simpan();
+    render();
+}
+
+function jualBarang(i) {
+    let jml = Number(prompt("Jumlah jual:"));
+    if (!jml || jml > beli[i].stok) return;
+
+    let d = beli[i];
+    let profit = d.hargaJual - d.hargaBeli;
+    let nama = `${d.monster} ${d.item} ${d.color}`;
+
+    let ex = jual.find(j => j.item === nama);
+    if (ex) {
+        ex.totalProfit += profit * jml;
+        ex.totalBeli += d.hargaBeli * jml;
+        ex.tanggal = tanggal();
+    } else {
+        jual.push({
+            tanggal: tanggal(),
+            item: nama,
+            hargaBeli: d.hargaBeli,
+            hargaJual: d.hargaJual,
+            profit: profit,
+            totalProfit: profit * jml,
+            totalBeli: d.hargaBeli * jml,
+            color: d.color
+        });
+    }
+
+    d.stok -= jml;
+    if (d.stok <= 0) beli.splice(i, 1);
+
+    simpan();
+    render();
+}
+
+function renderGrafik() {
+    const profitPerHari = {};
+
+    jual.forEach(d => {
+        const tgl = new Date(d.tanggal).toISOString().slice(0, 10);
+        profitPerHari[tgl] = (profitPerHari[tgl] || 0) + d.totalProfit;
+    });
+
+    const labels = Object.keys(profitPerHari).sort();
+    const data = labels.map(t => profitPerHari[t]);
+
+    const ctx = document.getElementById("grafikProfit");
+    if (chart) chart.destroy();
+
+    chart = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels,
+            datasets: [{
+                label: "Pendapatan Harian",
+                data,
+                borderWidth: 2,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    ticks: {
+                        callback: v => v.toLocaleString("id-ID")
+                    }
+                }
+            }
+        }
+    });
+}
+
+function render() {
+    tabelBeli.innerHTML = "";
+    beli.forEach((d, i) => {
+        tabelBeli.innerHTML += `
+        <tr class="${d.color}">
+            <td>${i+1}</td>
+            <td>${d.tanggal}</td>
+            <td>${d.monster} ${d.item} ${d.color}</td>
+            <td>${format(d.hargaBeli)}</td>
+            <td>${format(d.hargaJual)}</td>
+            <td>${d.stok}</td>
+            <td><button onclick="jualBarang(${i})">Jual</button></td>
+        </tr>`;
+    });
+
+    tabelJual.innerHTML = "";
+    jual.forEach((d, i) => {
+        tabelJual.innerHTML += `
+        <tr class="${d.color}">
+            <td>${i+1}</td>
+            <td>${d.tanggal}</td>
+            <td>${d.item}</td>
+            <td>${format(d.hargaBeli)}</td>
+            <td>${format(d.hargaJual)}</td>
+            <td>${format(d.profit)}</td>
+            <td>${format(d.totalProfit)}</td>
+            <td>${format(d.totalBeli)}</td>
+        </tr>`;
+    });
+
+    renderGrafik();
+}
+
+const monster = document.getElementById("monster");
+const item = document.getElementById("item");
+const color = document.getElementById("color");
+const jumlah = document.getElementById("jumlah");
+const hargaBeli = document.getElementById("hargaBeli");
+const hargaJual = document.getElementById("hargaJual");
+
+render();
+</script>
+
+</body>
+</html>
